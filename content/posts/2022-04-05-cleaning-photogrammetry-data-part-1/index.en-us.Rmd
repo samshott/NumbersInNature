@@ -14,7 +14,7 @@ tags:
   - UAS
 ---
 
-data collected by Oren Nardi, at College of the Redwoods campus in Eureka.
+Data collected by Oren Nardi, at College of the Redwoods campus in Eureka.
 
 Paper and code snippets by Sam Ericksen
 
@@ -29,13 +29,13 @@ options(rgl.useNULL = TRUE)
 
 ## Package Setup
 
-First we need to load in a number of packages to work with the LiDAR data. Remember to use `install.packages()` to install/update any non-current packages on your system.
+First, packages need to be loaded to work with the LiDAR data. Remember to use `install.packages()` to install/update any non-current packages on your system.  Each package has a use
 
 ```{r packages,echo=1:4, message=FALSE, error=FALSE}
-library(lidR)
-library(lidRplugins)
-library(raster)
-library(rgdal)
+library(lidR) #functions for point cloud manipulation
+library(lidRplugins) #experimental and alpha functions for lidR package
+library(raster) #raster manipulation
+library(rgdal) #spatial data manipulation
 library(rgl)
 ```
 

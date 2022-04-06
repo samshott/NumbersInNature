@@ -1,5 +1,5 @@
 ---
-title: Working with Sentinel-2 Data for Moisture Estimates
+title: Working with Sentinel-2 Data for Moisture Estimates - Part 1
 author: Sam Ericksen
 date: '2022-03-30'
 slug: index.en-us
@@ -25,8 +25,8 @@ tags:
 <script src="/rmarkdown-libs/leaflet-providers-plugin/leaflet-providers-plugin.js"></script>
 
 
-<p>We are going to be pulling Sentinel-2 imagery from Google Cloud, using the Google Cloud SDK (CLI). In order for the rest of this process to work, make sure that <a href="https://cloud.google.com/sdk/docs/install">Google Cloud SDK</a> is installed on your computer in the default directory.</p>
 <p>Sentinel-2 is a relatively low resolution in its spatial dimension (~30m resolution), but has is spectrally high resolution - that is it has a wide variety of different spectral bands available. This allows for the development of many common indices like Normalized Vegetation Index and Enhanced Vegitation Index. Here we will work with a less common index: Normalized Difference Moisture Index (NDMI).</p>
+<p>We are going to be pulling Sentinel-2 imagery from Google Cloud, using the Google Cloud SDK (CLI). In order for the rest of this process to work, make sure that <a href="https://cloud.google.com/sdk/docs/install">Google Cloud SDK</a> is installed on your computer in the default directory.</p>
 <pre class="r"><code>library(sen2r) #read in sentinel-2 imagery
 library(terra) #Spatial data tools
 library(leaflet) #Interactive map viewer
@@ -55,11 +55,9 @@ st_crs(Laguna_Ext_sf) &lt;- 3857
 
 Laguna_file_name &lt;- &quot;Laguna_Ext.GeoJSON&quot; #filename for writing and using GeoJSON
 
-write_sf(Laguna_Ext_sf, Laguna_file_name) #write it to a GeoJSON format for ingestion by sen2r()</code></pre>
-<pre><code>## Warning in CPL_write_ogr(obj, dsn, layer, driver,
-## as.character(dataset_options), : GDAL Error 6: DeleteLayer() not supported by
-## this dataset.</code></pre>
-<pre class="r"><code>leaflet(st_as_sf(Laguna_Ext)) %&gt;% 
+write_sf(Laguna_Ext_sf, Laguna_file_name) #write it to a GeoJSON format for ingestion by sen2r()
+
+leaflet(st_as_sf(Laguna_Ext)) %&gt;% 
   addTiles() %&gt;% 
   addPolygons()</code></pre>
 <div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
@@ -202,4 +200,11 @@ raster::writeRaster(cummulative_moisture,
 ## names      : sum 
 ## values     : -56297, 60802  (min, max)</code></pre>
 </div>
+</div>
+<div id="still-to-come-in-part-2" class="section level1">
+<h1>Still to come in Part 2…</h1>
+<ul>
+<li><p><strong>Create H3 tiles in AOI</strong></p></li>
+<li><p><strong>Extract Raster Data to Vector</strong></p></li>
+</ul>
 </div>

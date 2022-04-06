@@ -1,5 +1,5 @@
 ---
-title: Working with Sentinel-2 Data for Moisture Estimates
+title: Working with Sentinel-2 Data for Moisture Estimates - Part 1
 author: Sam Ericksen
 date: '2022-03-30'
 slug: index.en-us
@@ -17,9 +17,9 @@ tags:
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 ```
 
-We are going to be pulling Sentinel-2 imagery from Google Cloud, using the Google Cloud SDK (CLI). In order for the rest of this process to work, make sure that [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) is installed on your computer in the default directory.
-
 Sentinel-2 is a relatively low resolution in its spatial dimension (\~30m resolution), but has is spectrally high resolution - that is it has a wide variety of different spectral bands available. This allows for the development of many common indices like Normalized Vegetation Index and Enhanced Vegitation Index. Here we will work with a less common index: Normalized Difference Moisture Index (NDMI).
+
+We are going to be pulling Sentinel-2 imagery from Google Cloud, using the Google Cloud SDK (CLI). In order for the rest of this process to work, make sure that [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) is installed on your computer in the default directory.
 
 ```{r setup packages, warning=FALSE, message=FALSE}
 library(sen2r) #read in sentinel-2 imagery
