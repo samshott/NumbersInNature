@@ -25,7 +25,8 @@ tags:
 <script src="/rmarkdown-libs/leaflet-providers-plugin/leaflet-providers-plugin.js"></script>
 
 
-<p>Sentinel-2 is a relatively low resolution in its spatial dimension (~30m resolution), but has is spectrally high resolution - that is it has a wide variety of different spectral bands available. This allows for the development of many common indices like Normalized Vegetation Index and Enhanced Vegitation Index. Here we will work with a less common index: Normalized Difference Moisture Index (NDMI).</p>
+<p>This project was made in collaboration with Althouse &amp; Meade inc. in an continuation of efforts to monitor rare and endangered plants in the area. Idea’s for tracking rare plants formed by Kyle Nessen of Althouse &amp; Meade Inc.</p>
+<p>Sentinel-2 is a relatively low resolution in its spatial dimension (~30m resolution), but has is spectrally high resolution - that is it has a wide variety of different spectral bands available. This allows for the development of many common indices like Normalized Vegetation Index and Enhanced Vegetation Index. Here we will work with a less common index: Normalized Difference Moisture Index (NDMI).</p>
 <p>We are going to be pulling Sentinel-2 imagery from Google Cloud, using the Google Cloud SDK (CLI). In order for the rest of this process to work, make sure that <a href="https://cloud.google.com/sdk/docs/install">Google Cloud SDK</a> is installed on your computer in the default directory.</p>
 <pre class="r"><code>library(sen2r) #read in sentinel-2 imagery
 library(terra) #Spatial data tools
