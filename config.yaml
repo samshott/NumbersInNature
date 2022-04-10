@@ -1,4 +1,4 @@
-baseURL: /
+baseURL: "https://numbers-in-nature.netlify.app/"
 languageCode: en-us
 defaultContentLanguage: en-us
 title: Numbers in Nature - Sam Ericksen
