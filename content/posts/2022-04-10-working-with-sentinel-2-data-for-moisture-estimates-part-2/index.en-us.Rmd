@@ -1,0 +1,175 @@
+---
+title: Working with Sentinel-2 Data for Moisture Estimates - Part 2
+author: Sam Ericksen
+date: '2022-04-10'
+slug: index.en-us
+categories:
+  - Remote Sensing
+tags: 
+  - R
+  - Satellite Data
+  - Sentinel-2
+  - NDMI
+---
+
+**Author:** Sam Ericksen
+
+**Date:** 4/7/2020
+
+This project was made in collaboration with Althouse & Meade inc. in an continuation of efforts to monitor rare and endangered plants in the area. Idea's for tracking rare plants formed by Kyle Nessen of Althouse & Meade Inc.
+
+Although the indices created from the sentinel-2 data are useful by themselves in many applications, they are still a pixelized raster format. This means that we cannot easily join them with other data. In our case we are using soil moisture as one of many variables to predict good habitat for a local plant. Because we are looking at other variables too, it would be nice if we could aggrigate values within a fixed grid system that remains constant across all variables. Uber H3 has offered up a solution using concentric hexagons that we will use here @brodsky2018.
+
+```{r knitr setup, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+```
+
+First lets load in some packages to help us work with spatial data. (Note: if you are continuing working from Part 1 directly, you only need to load in the `h3` package).
+
+```{r Setup packages, warning=FALSE, message=FALSE}
+library(h3) #aggrigation on Ubers H3 hexagon grid
+library(terra) #Spatial data tools
+library(leaflet) #Interactive map viewer
+library(leafpop)
+library(sf) #for conversion between spatial formats
+library(raster)
+library(RColorBrewer)
+library(dplyr)
+```
+
+# Loading in the Data
+
+Note: If you are coming directly from the post "Sentinel-2 Soil Moisture Data Mining Part 1" you will be able to use the `cummulative_moisture` variable to work with the aggregated raster already loaded into memory, and the next step can be skipped.
+
+A handy method for reading files from your local drive is to use the `file.choose()` function from base r. This function opens up a file explorer GUI window and allows the user to select files directly from the local drive.
+
+It's also worth mentioning, that in the case you wanted to grab several files all in the same folder you can use the function `dir.choose()`, which allows the user to select a folder, in conjunction with `list.files()` to generate a list of paths to all files in a directory. This means that if you repeated Part 1 for several different date ranges, and then outputted all cumulative rasters to one folder, you could easily read them into a vector and use `lapply()` to apply most of the functions in this tutorial to all of the rasters.
+
+Here we will demonstrate the use of the `file.choose()` function, and although the resultant GUI won't be displayed on this page, when you run it on your local machine you should find the function quite intuitive.
+
+```{r psuedo raster path, echo=FALSE, eval=FALSE}
+rast_path_list <- c(choose.files())
+
+cumm_moisture_func <- function(path_list){
+  #' read in all rasters in a list
+  #' convert them to SpatRaster objects
+  #' Append them to a list
+  #' Return SpatRaster list
+  
+  raster_vect <- c()
+  for (path in path_list){
+    
+    i_rast <- rast(path)
+    
+    raster_vect <- append(raster_vect, (i_rast))
+  }
+  
+  return(raster_vect)
+}
+
+cummulative_moisture <- raster(sum(cumm_moisture_func(c(rast_path_list)), na.rm = TRUE))
+
+writeRaster(cummulative_moisture, "cummulative_moisture_example", writeFormats()[24])
+```
+
+```{r read in previous raster}
+rast_path <- "cummulative_moisture_example.tif" #find and select raster, create char vector of path to raster
+
+webmercProj <- "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs" # crs from previous exercise
+# 
+cummulative_moisture <- terra::rast(rast_path) #read in raster from path from previous exercise
+
+```
+
+# Raster to Vector Aggrigation
+
+## Create Empty H3 polygons for the AOI
+
+First we need to create some empty polygons (hexagons) to summarize the raster values within. To do this we simply use our previous polygon for the AOI (Part 1). Because we wrote the GeoJSON for the AOI to a file we can simply read it in here.
+
+```{r AOI}
+laguna_file <- "Laguna_Ext.GeoJSON"
+
+laguna_Ext <- read_sf(laguna_file)
+
+leaflet(laguna_Ext) %>% 
+  addTiles() %>% 
+  addPolygons()
+```
+
+Looks like we're still in the right place. Next lets construct a grid of H3 hexes for the area, with a resolution of 12 (based on resolution used for other variables).
+
+```{r Create H3, echo = 2:5, warning=FALSE}
+
+laguna_h3 <- 
+  geo_to_h3(laguna_Ext) %>% #create all encompassing hexagons index list
+  unique()
+
+laguna_h3_12 <- c()
+
+for (index in laguna_h3){
+  children <- h3_to_children(index, res = 12)
+  
+  laguna_h3_12 <-  c(laguna_h3_12, children)
+}
+
+laguna_h3_12 <- cbind(h3_to_geo_boundary_sf(laguna_h3_12),laguna_h3_12)[laguna_Ext, ] #retain an attribute of the h3 index
+
+leaflet(laguna_h3_12) %>% 
+  addTiles() %>% 
+  addPolygons( fill = "transparent", weight = 0.6) %>% 
+  addRasterImage(raster(cummulative_moisture))
+```
+
+## Extract Values
+
+Now we need to summarize the values of the cumulative moisture raster into the h3 hexagons. This process is called extraction @mieno. Since the pixels are square and the raster is hexagonalwe must weight the the summarized values by the area of the pixel that is contained within each hexagon.
+
+```{r extract values}
+
+cummulative_moisture <-  project(cummulative_moisture, crs(laguna_Ext))
+
+laguna_h3_moisture_mean <- terra::extract(cummulative_moisture, 
+                                          vect(laguna_h3_12), 
+                                          fun = mean)
+
+laguna_h3_12 <- cbind(laguna_h3_12,
+                      laguna_h3_moisture_mean$cummulative_moisture_example)
+
+
+colnames(laguna_h3_12) <- c("H3 Index", "Cummulative Moisture", "geometry")
+
+laguna_h3_12$`Cummulative Moisture` <- round(laguna_h3_12$`Cummulative Moisture`)
+
+cumm_pal <- colorNumeric(palette = "RdYlBu",
+                         domain = laguna_h3_12$`Cummulative Moisture`, 
+                         na.color = "transparent", 
+                         reverse = TRUE)
+
+
+
+leaflet(laguna_h3_12) %>% 
+  addPolygons(fillColor = ~cumm_pal(`Cummulative Moisture`), 
+              fillOpacity = 0.8, 
+              color = "dark grey", 
+              weight = 0.2,
+              popup = popupTable(laguna_h3_12[1:2])) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addLegend(pal = cumm_pal,
+            values = laguna_h3_12$`Cummulative Moisture`,
+            title = "Cummulative NDMI",
+            labFormat =  function(type, cuts, p) {
+              n = length(cuts) 	
+              cuts[n] = "Least" 	
+              for (i in 2:(n-1)){cuts[i] = ""}
+              cuts[1] = "Most"	
+              paste0(cuts[-n], cuts[-1])})
+```
+
+# Coming in Part 3
+
+-   Segmenting water bodies using lidR package
+
+-   Clipping intersecting polygons from moisture feature to make scale data to ground values
+
+# References
