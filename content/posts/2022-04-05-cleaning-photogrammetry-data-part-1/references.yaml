@@ -1,0 +1,49 @@
+---
+references:
+- id: zhang2016
+  accessed: "18:54:50"
+  author:
+  - family: Zhang
+    given: Wuming
+  - family: Qi
+    given: Jianbo
+  - family: Wan
+    given: Peng
+  - family: Wang
+    given: Hongtao
+  - family: Xie
+    given: Donghui
+  - family: Wang
+    given: Xiaoyan
+  - family: Yan
+    given: Guangjian
+  container-title: Remote Sensing
+  DOI: 10.3390/rs8060501
+  ISSN: 2072-4292
+  issue: 6
+  issued: 2016-06
+  key: DJDTYVLQ
+  language: en
+  libraryID: 1
+  Number: 6
+  page: 501
+  providerKey: 2509FBBE-5BB0-44C4-B119-6083A81ED673
+  Publisher: Multidisciplinary
+  rights: "http://creativecommons.org/licenses/by/3.0/"
+  source: www.mdpi.com
+  title: An Easy-to-Use Airborne LiDAR Data Filtering Method Based on
+    Cloth Simulation
+  type: article-journal
+  URL: "https://www.mdpi.com/2072-4292/8/6/501"
+  volume: 8
+- id: webodmd
+  accessed: "16:12:56"
+  container-title: OpenDroneMap
+  key: SJUSUW83
+  language: en-US
+  libraryID: 1
+  providerKey: 2509FBBE-5BB0-44C4-B119-6083A81ED673
+  title: WebODM Drone Software
+  type: post-weblog
+  URL: "https://www.opendronemap.org/webodm/"
+...

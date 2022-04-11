@@ -12,13 +12,12 @@ tags:
   - Natural Resources
   - Photogrammmetry
   - UAS
+bibliography: references.yaml
 ---
 
-Data collected by Oren Nardi, at College of the Redwoods campus in Eureka.
+Photogrammetry has come a long ways in the last decade, originally a process that originally rerfered to the arduous task of orthorectifying aerial imagery by hand. Now the term is normally used to define the process of using technologies like Structure From Motion and Multi-Stereo View through computer applications to produce three dimensional imagery from overlapping photos. The advancement of consumer level drone technologies have removed much of the financial burden associated the process of making landscape level three dimensional models.
 
-Paper and code snippets by Sam Ericksen
-
-Images processed in WebODM using the defualt "Forest" parameters
+Here, we work with a 3D model created using imagery captured with consumer-level [DJI Mavic 2](https://www.dji.com/mavic-2) drone and processed in open-source photogrammetry software @webodmd. The data captured in this process, unfortunately, excluded much of the understory. However, there are methods being produced that may lead to better understory capture in the future. For this project we will focus on the segmentation of individual trees, and attributing them with their heights, giving us an estimate of forest density and stande age-class.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -29,7 +28,7 @@ options(rgl.useNULL = TRUE)
 
 ## Package Setup
 
-First, packages need to be loaded to work with the LiDAR data. Remember to use `install.packages()` to install/update any non-current packages on your system.  Each package has a use
+First, packages need to be loaded to work with the LiDAR data. Remember to use `install.packages()` to install/update any non-current packages on your system. Each package has a use
 
 ```{r packages,echo=1:4, message=FALSE, error=FALSE}
 library(lidR) #functions for point cloud manipulation
@@ -88,7 +87,7 @@ When working with point clouds derived from photogrammetry, there is often no cl
 
 When we plotted the point cloud earlier we noticed that there aren't many points under the canopy, this makes ground classification a little tricky. Fortunately, there were ground points collected on the outskirts of the area of interest, so we can work with that.
 
-Because of the lack of ground under the canopy we will use a Cloth Simulation Filter . There are a few attributes that can be adjusted by the user, and the most important in this case is cloth rigidness, although 2L is generally for flat ground, to force some interpretation of the under-canopy ground we will use this setting. Once ground points are classified we plot just the ground points (ASPRS class 2L) to see how it performed.
+Because of the lack of ground under the canopy we will use a Cloth Simulation Filter @zhang2016. There are a few attributes that can be adjusted by the user, and the most important in this case is cloth rigidness, although 2L is generally for flat ground, to force some interpretation of the under-canopy ground we will use this setting. Once ground points are classified we plot just the ground points (ASPRS class 2L) to see how it performed.
 
 ```{r classify gound}
 
@@ -203,5 +202,13 @@ rglwidget()
 -   *Indv. Tree points geometry*
 
 -   *plot CHM with individual trees overlaid*
+
+## Notes
+
+-   Data collected by Oren Nardi, at College of the Redwoods campus in Eureka.
+
+-   Paper and code snippets by Sam Ericksen
+
+-   Images processed in WebODM using the defualt "Forest" parameters
 
 ## References

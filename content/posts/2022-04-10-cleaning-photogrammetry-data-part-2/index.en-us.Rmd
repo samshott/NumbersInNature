@@ -10,6 +10,7 @@ tags:
   - Satellite Data
   - Sentinel-2
   - NDMI
+bibliography: references.yaml
 ---
 
 This project was made in collaboration with Althouse & Meade inc. in an continuation of efforts to monitor rare and endangered plants in the area. Idea's for tracking rare plants formed by Kyle Nessen of Althouse & Meade Inc.
