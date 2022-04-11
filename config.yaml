@@ -13,7 +13,7 @@ disqusShortname: hugo-tranquilpeak-theme
 paginate: 7
 canonifyurls: yes
 permalinks:
-  posts: /:year/:month/:slug/
+  posts: /:year/:month/:day/:slug/
 taxonomies:
   archive: archives
   category: categories

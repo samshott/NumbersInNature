@@ -9,7 +9,7 @@
                {{ if eq .Params.covermeta "out" }}hasCoverMetaOut{{ else }}hasCoverMetaIn{{ end }}
                {{ with .Params.coverCaption }}hasCoverCaption{{ end }}">
         <article class="post" id="top">
-          {{ with .Params.covercaption }}
+          {{ with .Params.covercaption}}
             <span class="post-header-cover-caption caption">{{ . | markdownify }}</span>
           {{ end }}
           {{ if or (not .Params.coverimage) (eq .Params.covermeta "out") }}
