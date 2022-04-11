@@ -91,7 +91,7 @@ laguna_Ext <- read_sf(laguna_file)
 
 leaflet(laguna_Ext) %>% 
   addTiles() %>% 
-  addPolygons()
+  addPolygons(fillColor = "transparent")
 ```
 
 Looks like we're still in the right place. Next lets construct a grid of H3 hexes for the area, with a resolution of 12 (based on resolution used for other variables).
