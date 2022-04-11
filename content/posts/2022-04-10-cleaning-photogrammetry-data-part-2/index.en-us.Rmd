@@ -120,9 +120,9 @@ leaflet(laguna_h3_12) %>%
 
 ## Extract Values
 
-Now we need to summarize the values of the cumulative moisture raster into the h3 hexagons. This process is called extraction @mieno. Since the pixels are square and the raster is hexagonalwe must weight the the summarized values by the area of the pixel that is contained within each hexagon.
+Now we need to summarize the values of the cumulative moisture raster into the h3 hexagons. This process is called extraction @mieno. Since the pixels are square and the raster is hexagonal we must weight the the summarized values by the area of the pixel that is contained within each hexagon.
 
-```{r extract values}
+```{r extract values, warning=FALSE}
 
 cummulative_moisture <-  project(cummulative_moisture, crs(laguna_Ext))
 

@@ -60,9 +60,9 @@ write_sf(Laguna_Ext_sf, Laguna_file_name) #write it to a GeoJSON format for inge
 
 leaflet(st_as_sf(Laguna_Ext)) %&gt;% 
   addTiles() %&gt;% 
-  addPolygons()</code></pre>
+  addPolygons(fillColor = &quot;transparent&quot;)</code></pre>
 <div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
-<script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addPolygons","args":[[[[{"lng":[-120.7063985,-120.6881986,-120.6709197,-120.6741943,-120.6883474,-120.7063985],"lat":[35.2706786,35.281386,35.2768445,35.2647444,35.2544259,35.2706786]}]]],null,null,{"interactive":true,"className":"","stroke":true,"color":"#03F","weight":5,"opacity":0.5,"fill":true,"fillColor":"#03F","fillOpacity":0.2,"smoothFactor":1,"noClip":false},null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[35.2544259,35.281386],"lng":[-120.7063985,-120.6709197]}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addPolygons","args":[[[[{"lng":[-120.7063985,-120.6881986,-120.6709197,-120.6741943,-120.6883474,-120.7063985],"lat":[35.2706786,35.281386,35.2768445,35.2647444,35.2544259,35.2706786]}]]],null,null,{"interactive":true,"className":"","stroke":true,"color":"#03F","weight":5,"opacity":0.5,"fill":true,"fillColor":"transparent","fillOpacity":0.2,"smoothFactor":1,"noClip":false},null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[35.2544259,35.281386],"lng":[-120.7063985,-120.6709197]}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div id="download-sentinel-2-data" class="section level1">
 <h1>Download Sentinel-2 Data</h1>
@@ -138,7 +138,7 @@ leaflet(st_as_sf(Laguna_Ext)) %&gt;%
 <p>Now we want to aggregate soil moisture levels in the soil throughout the given time frame. Here we are concerned with total soil moisture we will be adding up all rasters from the <code>sen2r()</code> output.</p>
 <div id="creating-a-raster-vector" class="section level2">
 <h2>Creating a Raster Vector</h2>
-<p>First we create a vector containing all of the SpatRaster objects. Then we use raster algebra to sum all of the rasters in the raster vector <span class="math display">\[this may be improved with RasterStack objects\]</span>. Then we display it over a map to make sure it still makes sense.</p>
+<p>First we create a vector containing all of the SpatRaster objects. Then we use raster algebra to sum all of the rasters in the raster vector . Then we display it over a map to make sure it still makes sense.</p>
 <pre class="r"><code>cumm_moisture_func &lt;- function(path_list){
   #&#39; read in all rasters in a list
   #&#39; convert them to SpatRaster objects

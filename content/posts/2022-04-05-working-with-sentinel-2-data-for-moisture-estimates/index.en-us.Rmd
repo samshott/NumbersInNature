@@ -62,7 +62,7 @@ write_sf(Laguna_Ext_sf, Laguna_file_name) #write it to a GeoJSON format for inge
 
 leaflet(st_as_sf(Laguna_Ext)) %>% 
   addTiles() %>% 
-  addPolygons()
+  addPolygons(fillColor = "transparent")
 ```
 
 # Download Sentinel-2 Data
@@ -149,7 +149,7 @@ Now we want to aggregate soil moisture levels in the soil throughout the given t
 
 ## Creating a Raster Vector
 
-First we create a vector containing all of the SpatRaster objects. Then we use raster algebra to sum all of the rasters in the raster vector $$this may be improved with RasterStack objects$$. Then we display it over a map to make sure it still makes sense.
+First we create a vector containing all of the SpatRaster objects. Then we use raster algebra to sum all of the rasters in the raster vector . Then we display it over a map to make sure it still makes sense.
 
 ```{r raster list}
 
