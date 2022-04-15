@@ -144,3 +144,5 @@ unlink(directoryDel, recursive = TRUE) #delete intermediate data
 ## Final Thoughts
 
 By taking a brief look at the above height model you may notices small circles. These circles represent the outside diameter of stems, and they are the basis of stem segmentation methods, like the Hough Transformation @kuzelka2020. In a future blog I will work with stem segmentation methods to get information like diameter at breast height (DBH) from a dense point cloud similar to this one.
+
+# References
