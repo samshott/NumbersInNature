@@ -1,0 +1,26 @@
+---
+references:
+- id: opentopography2017
+  accessed: "23:17:21"
+  author:
+  - family: OpenTopography
+  DOI: 10.5069/G9V122Q1
+  issued: 2017
+  key: YG97YHG8
+  libraryID: 1
+  providerKey: 2509FBBE-5BB0-44C4-B119-6083A81ED673
+  Publisher: OpenTopography
+  source: DOI.org (Datacite)
+  title: 2014 USFS Tahoe National Forest Lidar
+  type: article-journal
+  URL: "https://opentopography.org/meta/OT.032017.26910.2"
+- id: builda
+  accessed: "01:15:44"
+  key: 8H79LMFM
+  libraryID: 1
+  providerKey: 2509FBBE-5BB0-44C4-B119-6083A81ED673
+  source: R-Packages
+  title: Build a LAScatalog object reading a folder of las files
+  type: book
+  URL: "https://cran.r-project.org/web/packages/lidR/vignettes/lidR-LAScatalog-class.html"
+...

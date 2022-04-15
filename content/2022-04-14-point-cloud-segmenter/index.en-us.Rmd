@@ -1,0 +1,144 @@
+---
+title: Point Cloud Segmenter
+author: Sam Ericksen
+date: '2022-04-14'
+slug: index.en-us
+categories:
+  - Remote Sensing
+tags:
+  - Forestry
+  - Nautral Resources
+  - Canopy Height Model
+  - LAS Catalog
+bibliography: references.yaml
+---
+
+```{r setup, include=FALSE}
+library(rgl)
+knitr::opts_chunk$set(echo = TRUE)
+options(rgl.useNULL=TRUE)
+```
+
+# Building a Point Cloud Segmenter
+
+Here we will demonstrate a couple useful skills for working with point cloud data: Cataloging and subsetting. Because point clouds can take up a lot of disk space (especially with large areas of interest), and because R reads in data to the RAM, which can be quite limited - users are often met with a choice for processing pointclouds in R:
+
+1.  Upgrade your RAM
+
+2.  Load in your data in smaller chunks
+
+Here we will work with a built-in method for doing the latter.
+
+```{r packages, warning=FALSE, message=FALSE}
+library(lidR)
+library(rlas)
+library(rgdal)
+library(sf)
+library(stringr)
+library(mapview)
+```
+
+## LAS Catalog Basics
+
+As you can imagine, if its possible to work without upgrading costly computer components - like the RAM - that is often the ideal solution. In this case you might imagine looping through small chunks of the data, but the lidR package already has a built-in solution for this problem: LAS catalogs. LAS catalogs allow for the user to point to a large las dataset, and then only load in chunks parts of it during the process, never having more than one chunk in the RAM at a time, and saving the outputs to the hard drive.
+
+Here we will work with a dataset provided by the US Forest Service, and downloaded through the Open Topography portal @opentopography2017. The boundaries of the dateset can be seen here:
+
+```{r lidar area, echo=FALSE, warning=FALSE}
+lasCat <- readLAScatalog("Example_small_las.laz")
+plot(lasCat, mapview=TRUE, map.type = "Esri.WorldImagery", chunk = TRUE, layer.name = "LAS Boundary")
+```
+
+The goal is to make a raster that contains only values from the first 15 feet of the point cloud, that can later be analyzed for a brief summary on understory biomass.
+
+### Reading in the Data
+
+First we simply read in the dataset as a LAS catalog, which can either take the form of a set of contiguous point clouds, or one large file to be split into smaller chunks. Here we load in one file and designate a chunk size later.
+
+```{r Read LasCat}
+lasCat <- readLAScatalog("Example_small_las.laz")
+
+#las_check(lasCat)  #its good to run a las_check() (deep check) on all las files, but it doesn't play well with the website...
+```
+
+### Setting the Catalog Processing Options
+
+There are many different catalog processing options that can be imbedded in a LAS catalog object. Here we will only modify the chunk size, and whether or not to merge the data after processing. If you'd like to learn more about processing and LAS catalogs you can check out the CRAN object definition and tutorial @builda.
+
+Chunk size is the size for areas that will be loaded in and processed individually in meters, and it must be set at each phase of processing. Here we use a very small size (175m) for the sake of example, however, normally chunks would not be required for a point cloud this size. Here we see a graphic output of how the catalog will be processed chunk wise. When processing you can also see a real-time plot of chunks as they are individually processed.
+
+```{r chunk setup}
+chunkSize <- 175
+opt_chunk_size(lasCat) <- chunkSize
+plot(lasCat, chunk = TRUE)
+```
+
+## Directory Creation
+
+Because the slicer will output multiple raster files, it is a good idea to create a folder to store all of the rasters in one place. We also set up a variable to get rid of intermediate files later.
+
+```{r Dir creation, warning=FALSE}
+dir.create( "/temp_slicer") #create subdirectory in working directory
+
+
+opt_output_files(lasCat) <- ("~/temp_slicer/Temp_Normalized_{ID}")
+
+directoryDel <- (paste0( "~/temp_slicer"))
+
+lasCat@output_options$merge <- TRUE #merge all chunks into one unit
+```
+
+## Processing The LAS Catalog
+
+### Normalizing Height
+
+Often, when we discuss biomass or similar variables in a forest, the question is relatively posed on a relative to ground surface level basis. So first we must normalize the height of the raster. You'll get a real-time readout like the output of the following code chunk.
+
+```{r Normalize cat, results='hide', fig.keep='first'}
+lasCat_Normalized <- normalize_height(lasCat, algorithm = tin())
+```
+
+Then we check that the catalog has been normalized successfully:
+
+```{r}
+#check that z values are close to 0
+plot(lasCat_Normalized["Min.Z"])
+```
+
+Here we are within a foot and a half on either side of zero. That's pretty good, but we could still get rid of some negative values.
+
+### Clean-up Values
+
+For this example we are primarily concerned with values below 15 foot. So we will drop values below 0, above 15, and anything of class 2 (ground). To do this we assign processing values to the catalog. These values do not change the catalog, but instead act as instructions for the next time the data is processed.
+
+```{r remove unneccesary values}
+opt_filter(lasCat_Normalized) <- "-drop_z_below .1 -drop_z_above 15 -drop_class 2"
+
+opt_output_files(lasCat_Normalized) <- (paste0(directoryDel, "\\Temp_Normalized_{ID}"))
+
+lasCat_Normalized@output_options$merge <- TRUE
+```
+
+### Create a Canopy Height Model
+
+For many people this may be your final goal, creating a canopy height model raster from a very large raster. The process is relatively simple, but if you want a canopy height model that includes values above 15 foot (as most will), simply remove the `"-drop_z_above 15"` call from the above code chunk. When we run the `rasterize_canopy()` function below, we actually right the raster in chunks to the created directory above.
+
+```{r CHM, fig.keep='last', results='hide'}
+raster_norm <- rasterize_canopy(lasCat_Normalized, res = 1, overwrite = TRUE)
+getwd()
+plot(raster_norm)
+```
+
+### Merge Rasters
+
+Finally we'd like to merge all of the raster chunks to a single raster for later processing. Once we've merged and saved the raster we can also delete all of the bulky intermediate files using the variable we created earlier.
+
+```{r merge rasters}
+
+
+terra::writeRaster(raster_norm, "~LasNorm_0-15ft_Raster.tif", overwrite = TRUE) #writes the final combined raster to the desired output folder
+
+
+
+unlink(directoryDel, recursive = TRUE) #delete intermediate data
+```
