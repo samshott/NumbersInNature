@@ -23,4 +23,32 @@ references:
   title: Build a LAScatalog object reading a folder of las files
   type: book
   URL: "https://cran.r-project.org/web/packages/lidR/vignettes/lidR-LAScatalog-class.html"
+- id: kuzelka2020
+  accessed: "16:51:38"
+  author:
+  - family: Kuželka
+    given: Karel
+  - family: Slavík
+    given: Martin
+  - family: Surový
+    given: Peter
+  container-title: Remote Sensing
+  DOI: 10.3390/rs12081236
+  ISSN: 2072-4292
+  issue: 8
+  issued: 2020-01
+  key: R95QX5K8
+  language: en
+  libraryID: 1
+  Number: 8
+  page: 1236
+  providerKey: 2509FBBE-5BB0-44C4-B119-6083A81ED673
+  Publisher: Multidisciplinary
+  rights: "http://creativecommons.org/licenses/by/3.0/"
+  source: www.mdpi.com
+  title: Very High Density Point Clouds from UAV Laser Scanning for
+    Automatic Tree Stem Detection and Direct Diameter Measurement
+  type: article-journal
+  URL: "https://www.mdpi.com/2072-4292/12/8/1236"
+  volume: 12
 ...

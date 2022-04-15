@@ -31,8 +31,6 @@ Here we will work with a built-in method for doing the latter.
 
 ```{r packages, warning=FALSE, message=FALSE}
 library(lidR)
-library(rlas)
-library(rgdal)
 library(sf)
 library(stringr)
 library(mapview)
@@ -42,7 +40,7 @@ library(mapview)
 
 As you can imagine, if its possible to work without upgrading costly computer components - like the RAM - that is often the ideal solution. In this case you might imagine looping through small chunks of the data, but the lidR package already has a built-in solution for this problem: LAS catalogs. LAS catalogs allow for the user to point to a large las dataset, and then only load in chunks parts of it during the process, never having more than one chunk in the RAM at a time, and saving the outputs to the hard drive.
 
-Here we will work with a dataset provided by the US Forest Service, and downloaded through the Open Topography portal @opentopography2017. The boundaries of the dateset can be seen here:
+Here we will work with a dataset provided by the US Forest Service, and downloaded through the Open Topography portal @opentopography2017. The boundaries of the dataset can be seen here:
 
 ```{r lidar area, echo=FALSE, warning=FALSE}
 lasCat <- readLAScatalog("Example_small_las.laz")
@@ -63,7 +61,7 @@ lasCat <- readLAScatalog("Example_small_las.laz")
 
 ### Setting the Catalog Processing Options
 
-There are many different catalog processing options that can be imbedded in a LAS catalog object. Here we will only modify the chunk size, and whether or not to merge the data after processing. If you'd like to learn more about processing and LAS catalogs you can check out the CRAN object definition and tutorial @builda.
+There are many different catalog processing options that can be embedded in a LAS catalog object. Here we will only modify the chunk size, and whether or not to merge the data after processing. If you'd like to learn more about processing and LAS catalogs you can check out the CRAN object definition and tutorial @builda.
 
 Chunk size is the size for areas that will be loaded in and processed individually in meters, and it must be set at each phase of processing. Here we use a very small size (175m) for the sake of example, however, normally chunks would not be required for a point cloud this size. Here we see a graphic output of how the catalog will be processed chunk wise. When processing you can also see a real-time plot of chunks as they are individually processed.
 
@@ -78,7 +76,7 @@ plot(lasCat, chunk = TRUE)
 Because the slicer will output multiple raster files, it is a good idea to create a folder to store all of the rasters in one place. We also set up a variable to get rid of intermediate files later.
 
 ```{r Dir creation, warning=FALSE}
-dir.create( "/temp_slicer") #create subdirectory in working directory
+dir.create( "~/temp_slicer") #create subdirectory in working directory
 
 
 opt_output_files(lasCat) <- ("~/temp_slicer/Temp_Normalized_{ID}")
@@ -121,7 +119,7 @@ lasCat_Normalized@output_options$merge <- TRUE
 
 ### Create a Canopy Height Model
 
-For many people this may be your final goal, creating a canopy height model raster from a very large raster. The process is relatively simple, but if you want a canopy height model that includes values above 15 foot (as most will), simply remove the `"-drop_z_above 15"` call from the above code chunk. When we run the `rasterize_canopy()` function below, we actually right the raster in chunks to the created directory above.
+For many people this may be your final goal, creating a canopy height model raster from a very large raster. The process is relatively simple, but if you want a canopy height model that includes values above 15 foot (as most will), simply remove the `"-drop_z_above 15"` call from the above code chunk. When we run the `rasterize_canopy()` function below, we actually write the raster in chunks to the created directory above.
 
 ```{r CHM, fig.keep='last', results='hide'}
 raster_norm <- rasterize_canopy(lasCat_Normalized, res = 1, overwrite = TRUE)
@@ -142,3 +140,7 @@ terra::writeRaster(raster_norm, "~LasNorm_0-15ft_Raster.tif", overwrite = TRUE) 
 
 unlink(directoryDel, recursive = TRUE) #delete intermediate data
 ```
+
+## Final Thoughts
+
+By taking a brief look at the above height model you may notices small circles. These circles represent the outside diameter of stems, and they are the basis of stem segmentation methods, like the Hough Transformation @kuzelka2020. In a future blog I will work with stem segmentation methods to get information like diameter at breast height (DBH) from a dense point cloud similar to this one.
