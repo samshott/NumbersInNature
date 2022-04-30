@@ -2,7 +2,7 @@
 title: Working with Sentinel-2 Data for Moisture Estimates - Part 1
 author: Sam Ericksen
 date: '2022-03-30'
-slug: index.en-us
+slug: Sentinel2-part1
 categories:
   - Remote Sensing
 tags:
@@ -119,7 +119,7 @@ raster_ndmis_paths <- c(out_paths) #list of paths from raster outputs
 ```
 
 ```{r sen2r psuedo-Output, echo=FALSE}
-raster_ndmis_paths <- c(choose.files())
+raster_ndmis_paths <- c(paste0(getwd(),"/NDMI/", list.files("NDMI")))
 ```
 
 ## View Raster on a Map
@@ -205,9 +205,9 @@ daterange <- gsub(pattern = "-",
 
 fileName <- paste0("LagunaMoistureCumm_", daterange)
 
-raster::writeRaster(cummulative_moisture, 
-                    filename = fileName, #writes to the working directory
-                    formate = writeFormats()[24]) #Geotiff indice from formats list
+#raster::writeRaster(cummulative_moisture, 
+#                    filename = fileName, #writes to the working directory
+#                    formate = writeFormats()[24]) #Geotiff indice from formats list
 ```
 
 # Still to come in Part 2...

@@ -2,7 +2,7 @@
 title: Working with Sentinel-2 Data for Moisture Estimates - Part 2
 author: Sam Ericksen
 date: '2022-04-10'
-slug: index.en-us
+slug: Sentinel2-part2
 categories:
   - Remote Sensing
 tags: 

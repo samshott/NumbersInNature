@@ -2,7 +2,7 @@
 title: Working with Sentinel-2 Data for Moisture Estimates - Part 1
 author: Sam Ericksen
 date: '2022-03-30'
-slug: index.en-us
+slug: Sentinel2-part1
 categories:
   - Remote Sensing
 tags:
@@ -56,9 +56,11 @@ st_crs(Laguna_Ext_sf) &lt;- 3857
 
 Laguna_file_name &lt;- &quot;Laguna_Ext.GeoJSON&quot; #filename for writing and using GeoJSON
 
-write_sf(Laguna_Ext_sf, Laguna_file_name) #write it to a GeoJSON format for ingestion by sen2r()
-
-leaflet(st_as_sf(Laguna_Ext)) %&gt;% 
+write_sf(Laguna_Ext_sf, Laguna_file_name) #write it to a GeoJSON format for ingestion by sen2r()</code></pre>
+<pre><code>## Warning in CPL_write_ogr(obj, dsn, layer, driver,
+## as.character(dataset_options), : GDAL Error 6: DeleteLayer() not supported by
+## this dataset.</code></pre>
+<pre class="r"><code>leaflet(st_as_sf(Laguna_Ext)) %&gt;% 
   addTiles() %&gt;% 
   addPolygons(fillColor = &quot;transparent&quot;)</code></pre>
 <div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
@@ -189,17 +191,9 @@ leaflet(st_as_sf(Laguna_Ext)) %&gt;%
 
 fileName &lt;- paste0(&quot;LagunaMoistureCumm_&quot;, daterange)
 
-raster::writeRaster(cummulative_moisture, 
-                    filename = fileName, #writes to the working directory
-                    formate = writeFormats()[24]) #Geotiff indice from formats list</code></pre>
-<pre><code>## class      : RasterLayer 
-## dimensions : 300, 322, 96600  (nrow, ncol, ncell)
-## resolution : 10, 10  (x, y)
-## extent     : 708620, 711840, 3903700, 3906700  (xmin, xmax, ymin, ymax)
-## crs        : +proj=utm +zone=10 +datum=WGS84 +units=m +no_defs 
-## source     : LagunaMoistureCumm_202111_202211.grd 
-## names      : sum 
-## values     : -56297, 60802  (min, max)</code></pre>
+#raster::writeRaster(cummulative_moisture, 
+#                    filename = fileName, #writes to the working directory
+#                    formate = writeFormats()[24]) #Geotiff indice from formats list</code></pre>
 </div>
 </div>
 <div id="still-to-come-in-part-2" class="section level1">
