@@ -2,7 +2,7 @@
 title: Canopy Cover from Spherical photos
 author: Sam Ericksen
 date: '2022-04-30'
-slug: index.en-us
+slug: Canopy-Cover1
 output: 
   html_document:
     toc: TRUE
