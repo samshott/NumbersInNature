@@ -1,0 +1,328 @@
+---
+title: Canopy Cover from Spherical photos
+author: Sam Ericksen
+date: '2022-04-30'
+slug: index.en-us
+output: 
+  html_document:
+    toc: TRUE
+    toc_depth: 2
+categories:
+  - Forestry
+  - GIS
+tags:
+  - Spherical Photos
+  - Forestry
+  - Canopy Cover
+  - GIS
+bibliography: references.yaml
+---
+
+# Estimating Canopy Cover with Spherical Photos
+
+This tutorial was developed with the support of Althouse & Meade inc., and many of the ideas in the tutorial are based on ideas found here were synthesized by Kyle Nessen and collaborators.
+
+Here we aim to evaluate the potential use of spherical photos for the estimation of canopy cover. The goal is to eventually apply this towards analyzing the habitat of monarchs in local eucalyptus groves. Traditionally this is done with a class of tools called densiometers. These tools can be biased, and other tools have been developed to overcome these biases like the [GRS Densiometer](https://www.grsgis.com/densitometer.html). Similarly, methods using LiDAR and Photogrammetry (@andersen2005 ), however LiDAR and other remote sensing platforms are not always available or affordable.
+
+It is for that reason that this tutorial will aim at finding a more universal solution. Spherical cameras are small, portable, and relatively inexpensive, many offering built in GPS units at much smaller costs than bulkier hemispherical cameras. Much of the framework for this process was developed by Andis Arietta who also released several open license tools for conversions online (@arietta2020 ).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+library(knitr)
+
+#https://stackoverflow.com/questions/64597525/r-magick-square-crop-and-circular-mask
+#https://www.r-bloggers.com/2016/11/extracting-exif-data-from-photos-using-r/
+
+
+```
+
+```{r packages, message=FALSE, warning=FALSE}
+library(leaflet) #for interactive webmaps
+library(sf)
+library(magick) #image manipulation
+library(imager)
+library(plotrix)
+library(hemispheR)
+library(exifr)
+library(dplyr)
+```
+
+## Data Capture
+
+Data was captured by me (Sam Ericksen) using a GoPro 360 camera on a 6' pole while walking through the Coastal Access Monarch Butterfly Preserve in Los Osos, California. The area, can be seen here:
+
+```{r Preserve Area, echo=FALSE}
+leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(lng = -120.859574336949,
+             lat = 35.31198188641437)
+```
+
+capture occurred over the course of a few hours, and involved grid lining out the northern grove on foot. The path of capture can be seen below.
+
+```{r path of travel}
+tracks <- read_sf("PathShape/Euc_Forest_path.shp")
+
+tracks <- st_zm(tracks) #drop z dimension
+
+leaflet(tracks$geometry) %>% 
+  addProviderTiles("Esri.WorldImagery") %>% 
+  addPolylines()
+```
+
+## Reading in Some Test Pictures
+
+For ease of looping through large numbers of pictures, the first in the function chain will be built to take in a file path to an image, If RAM is not of concern for the number of images you are working with you may wish to read all images into memory using `image_read()` , and create a function to take in the magick images. For the sake of example, we will simply read in four 360 images.
+
+```{r read pics}
+img_paths <- paste0("360_Pics/", list.files("360_Pics"))
+
+num_pics <- length(img_paths)
+
+rand_ind <- sample.int(num_pics, 2) #save index for later to continue to work with the same pictures
+
+test_img_paths <-img_paths[rand_ind] #grab 2 random 360 pictures from the picture directory
+```
+
+## Cutting Images in Half
+
+360 degree photos are in essence spherical photos, and they are captured as planar (rectangular) projections of a sphere. This means that to create a rectangular projection of a hemisphere, we must cut the spherical projection in half along its horizontal axis. Eventually all of these functions will be applied to thousands of photos, so everything will be created in functions, before it is applied to photos, so we don't read thousands of photos into the ram all at once.
+
+```{r Half Images}
+sphere_to_hemi_rect <- function(image_path){
+  #'input: path to spherical image
+  #'output: rectangular projection of hemisphere image
+  sphere_rect_img <- image_read(image_path)
+  
+  hemi_rect <- image_crop(sphere_rect_img, "100%x50%") #crop off bottom half of image
+  
+  return(hemi_rect)
+}
+
+rect_imgs <- sphere_to_hemi_rect(test_img_paths)
+
+image_append( rect_imgs, stack = TRUE)
+```
+
+## Conversion to Polar Coordinates
+
+That function will output a hemispherical photo that is projected on a cartesian coordinate system (rectangular), but we need polar coordinates to match to get rid of distortions from projection. Here the function takes in a rectangular hemispherical photo, and outputs a polar (circular) hemispherical photo.
+
+```{r rect to polar}
+hemi_rect_to_polar <- function(hemi_rect_image){
+  
+  #project to polar coordinates
+  hemi_polar <- image_distort(hemi_rect_image,
+                                   "Polar",
+                                   c(0),
+                                   bestfit = TRUE)
+  
+  #draw bounding 
+  png(temp <- tempfile(fileext = ".png"), 736, 736)
+  
+  par(mar = rep(0,4), yaxs="i", xaxs="i")
+  
+  plot(0, 
+       type = "n", 
+       ylim = c(0,1), 
+       xlim=c(0,1), 
+       axes=F, 
+       xlab=NA, 
+       ylab=NA)
+  plotrix::draw.circle(.5,0.5,.5, col="black")
+  
+  dev.off()
+  
+  mask <-  image_read(temp) %>% 
+    image_scale(as.character(image_info(hemi_polar)$width))
+  
+  unlink(temp)
+  
+  hemi_polar <- image_composite(mask, 
+                                hemi_polar, 
+                                "minus")
+  
+  return(hemi_polar)
+
+}
+
+hemi_imgs <- hemi_rect_to_polar(rect_imgs)
+
+image_append( hemi_imgs)
+```
+
+## Write to directory
+
+Now we want to create a directory to save our resultant hemispherical photos in this will be the intermediate output. Here we will have successfully created hemispherical photos that mimic the quality of expensive hemispherical cameras using a relatively inexpensive 360 degree camera, congratulations!
+
+```{r save hemis}
+pol_pic_dir <- "hemi_polar_pics/"
+
+if (!dir.exists(pol_pic_dir)){ #only create it if it hasnt alread been done
+  
+  dir.create(pol_pic_dir)
+  
+  all_hemi_rects <-  sphere_to_hemi_rect(img_paths)
+  
+  all_polar <-  hemi_rect_to_polar(all_hemi_rects)
+  
+  img_names <- sapply(strsplit(img_paths,"/"), 
+                      getElement, 
+                      2)
+  
+  for (img_ind in 1:length(all_polar)){
+    
+    write_to <- paste0(pol_pic_dir, img_names[img_ind])
+    
+    # print(paste0(img_ind, "/", length(all_polar))) #for progress through loop
+    
+    image_write(
+      image = all_polar[img_ind], 
+      path = write_to)
+  }
+  
+  
+}
+```
+
+## Light Indices
+
+Next we'll use an experimental package called hemispheR to get some canopy information from the hemispherical images ( @chianucci2022 ).
+
+### Create Masked Fish Eye Raster
+
+Here we import our polar images from the previous sections as rasters using only the blue band (default with `import_fisheye`) Only the blue band is used from the photos because it gives them most contrast between sky and canopy cover.
+
+```{r masked blue}
+fisheye_paths <- paste0("hemi_polar_pics/", 
+                        list.files("hemi_polar_pics"))
+
+
+test_fisheye_paths <- fisheye_paths[rand_ind] #working with the same images as previous steps
+
+test_masked_FE <- lapply(test_fisheye_paths, 
+                         import_fisheye, 
+                         display = TRUE) #import both test fisheyes, and mask them
+
+#[[1]]@data@names subset to get filename
+
+
+```
+
+### Creating Gap Fraction Index
+
+#### Binarize Images
+
+The first step in creating a gap fraction index for a photo is to change the values to either sky or not-sky, this process is called binarization, making all pixels either 0 (not-sky) or 1 (sky). There are many methods for thresholding these value changes, but we will stick with the default method developed by Nobuyuki Otsu, which aims to minimize intra-class variance ( @otsu1979 ).
+
+```{r binarize}
+test_bi_FE <- lapply(test_masked_FE, 
+                     binarize_fisheye, 
+                     display = TRUE)
+```
+
+### Gap Fraction
+
+Next up we calculate the gap fraction. here the photo can be seperated into rings along any number of concentric circles coming from the center, as well as any number of segments with boundaries being rays from the center of the circle. The image can also be seperated into sections for North, South, East, and West - allowing for calculations of direction of sunlight angles under the canopy. Unfortunately, we did not collect the imagery with any specific direction orientation, so we cannot utilize this part of the function. Instead, we aim to use a large number of images to create a very granular inspection of light interception in the area.
+
+We must also decide which lens to use for your given camera for projection purposes. The list of lenses is extensive, and most name brand hemispherical cameras are included:
+
+```{r lenses, echo=FALSE}
+list.lenses
+```
+
+There are also four generic projections. In our case, the best fitting lens for converted GoPro 360 images happens to be orthographic.
+
+```{r Gap Fration}
+test_gap <- lapply(test_bi_FE, 
+                   gapfrac_fisheye, 
+                   lens = "orthographic",
+                   display = TRUE,
+                   message = TRUE,
+                   nseg = 1,
+                   nrings = 1)
+
+```
+
+### Leaf Area Index
+
+Here we use an indirect method for computing the leaf area index , which is a measure of the "one-sided green leaf area per unit ground surface area" ( @leafare2021 ). Also the effective leaf area index will be calculated which aims to describe how much light is intercepted within the canopy ( @zheng2009 ).
+
+```{r LAI, echo=1:3}
+
+test_LAI <- lapply(test_gap, canopy_fisheye)
+
+kable(bind_rows(test_LAI)[1:8]) #just keep the columns with info we need
+```
+
+The test seems to work, lets make a function to take in a list of paths, and output a a dataframe with ids and light indecies for each photo.
+
+### Get Dataframe
+
+```{r paths to light indecies, eval=FALSE}
+
+get_indicies_from_paths <- function(path_list, 
+                                    lens = "orthographic",
+                                    message = FALSE,
+                                    segment = 1,
+                                    ring = 1){
+  
+  masked_fisheye <- lapply(path_list, 
+                         import_fisheye, 
+                         display = FALSE,
+                         message = message)
+  
+  binary_fisheye <- lapply(masked_fisheye, 
+                     binarize_fisheye, 
+                     display = FALSE)
+  
+  gap_fraction <- lapply(binary_fisheye, 
+                   gapfrac_fisheye, 
+                   lens = "orthographic",
+                   display = FALSE,
+                   message = message,
+                   nseg = segment,
+                   nrings = ring)
+  
+  df_LAI <- lapply(gap_fraction, canopy_fisheye)
+  
+  return(bind_rows(df_LAI))
+  
+}
+
+pic_light_indices <- get_indicies_from_paths(fisheye_paths)
+
+```
+
+```{r psuedo variables, echo=FALSE}
+pic_light_indices <- read.csv2("light_indices.csv")
+```
+
+then we just check the first 10 rows to see what we get:
+
+```{r check light indicies, echo=FALSE, fig.align='left'}
+kable(head(pic_light_indices, 10))
+```
+
+Looks okay, but there are a few unnecessary columns, and the names are pretty unclear. Lets clean it up a bit.
+
+```{r df cleanup}
+pic_light_indices <- pic_light_indices[ , c(2:4,8:9, 12:13)]
+
+colnames(pic_light_indices) <- c("Pic_Name", "eff_LAI", "act_LAI","Gap_Frac", "Mean_Leaf_Angle", "Rings", "Azimuths")
+
+kable(head(pic_light_indices))
+
+```
+
+# Coming in Part 2
+
+### Geometry from photos
+
+### Point Locations
+
+### Add Attributes
+
+### Interpolation
+
+# References
