@@ -46,10 +46,10 @@ library(exifr)
 library(dplyr)</code></pre>
 <div id="data-capture" class="section level2">
 <h2>Data Capture</h2>
-<p>Data was captured by me (Sam Ericksen) using a GoPro 360 camera on a 6’ pole while walking through the Coastal Access Monarch Butterfly Preserve in Los Osos, California. The area, can be seen here:</p>
+<p>Data was captured by me (Sam Ericksen) using a GoPro 360 camera on a 2m pole while walking through the Coastal Access Monarch Butterfly Preserve in Los Osos, California. The area, can be seen here:</p>
 <div id="htmlwidget-1" style="width:672px;height:480px;" class="leaflet html-widget"></div>
 <script type="application/json" data-for="htmlwidget-1">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org\">OpenStreetMap<\/a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA<\/a>"}]},{"method":"addMarkers","args":[35.3119818864144,-120.859574336949,null,null,null,{"interactive":true,"draggable":false,"keyboard":true,"title":"","alt":"","zIndexOffset":0,"opacity":1,"riseOnHover":false,"riseOffset":250},null,null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[35.3119818864144,35.3119818864144],"lng":[-120.859574336949,-120.859574336949]}},"evals":[],"jsHooks":[]}</script>
-<p>capture occurred over the course of a few hours, and involved grid lining out the northern grove on foot. The path of capture can be seen below.</p>
+<p>capture occurred over the course of a few hours, and involved grid lining out the southern half of the northern grove on foot. The path of capture can be seen below.</p>
 <pre class="r"><code>tracks &lt;- read_sf(&quot;PathShape/Euc_Forest_path.shp&quot;)
 
 tracks &lt;- st_zm(tracks) #drop z dimension
@@ -233,6 +233,13 @@ test_masked_FE &lt;- lapply(test_fisheye_paths,
 <pre><code>## Used parameters xc, yc and rc are, 721, 721, 718
 ## Used parameters xc, yc and rc are, 721, 721, 718</code></pre>
 <p><img src="/posts/2022-04-30-canopy-cover-from-spherical-photos/index.en-us_files/figure-html/Gap%20Fration-1.png" width="672" style="display: block; margin: auto;" /><img src="/posts/2022-04-30-canopy-cover-from-spherical-photos/index.en-us_files/figure-html/Gap%20Fration-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># for (lens in list.lenses){
+#   gapfrac_fisheye(test_bi_FE[[1]],
+#                   lens = lens,
+#                   display = TRUE,
+#                   nseg = 1,
+#                   nrings = 1)
+# } </code></pre>
 </div>
 <div id="leaf-area-index" class="section level3">
 <h3>Leaf Area Index</h3>
@@ -253,24 +260,24 @@ test_masked_FE &lt;- lapply(test_fisheye_paths,
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">GSAH3027.JPG</td>
-<td align="right">0.85</td>
-<td align="right">0.85</td>
+<td align="left">GSAH3009.JPG</td>
+<td align="right">1.69</td>
+<td align="right">1.69</td>
 <td align="right">1</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">59.654</td>
-<td align="right">69</td>
+<td align="right">35.722</td>
+<td align="right">64</td>
 </tr>
 <tr class="even">
-<td align="left">GSAH3001.JPG</td>
-<td align="right">2.20</td>
-<td align="right">2.20</td>
+<td align="left">GSAH3006.JPG</td>
+<td align="right">1.72</td>
+<td align="right">1.72</td>
 <td align="right">1</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">26.095</td>
-<td align="right">77</td>
+<td align="right">35.003</td>
+<td align="right">69</td>
 </tr>
 </tbody>
 </table>

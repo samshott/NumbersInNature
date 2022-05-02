@@ -49,7 +49,7 @@ library(dplyr)
 
 ## Data Capture
 
-Data was captured by me (Sam Ericksen) using a GoPro 360 camera on a 6' pole while walking through the Coastal Access Monarch Butterfly Preserve in Los Osos, California. The area, can be seen here:
+Data was captured by me (Sam Ericksen) using a GoPro 360 camera on a 2m pole while walking through the Coastal Access Monarch Butterfly Preserve in Los Osos, California. The area, can be seen here:
 
 ```{r Preserve Area, echo=FALSE}
 leaflet() %>% 
@@ -58,7 +58,7 @@ leaflet() %>%
              lat = 35.31198188641437)
 ```
 
-capture occurred over the course of a few hours, and involved grid lining out the northern grove on foot. The path of capture can be seen below.
+capture occurred over the course of a few hours, and involved grid lining out the southern half of the northern grove on foot. The path of capture can be seen below.
 
 ```{r path of travel}
 tracks <- read_sf("PathShape/Euc_Forest_path.shp")
@@ -242,6 +242,14 @@ test_gap <- lapply(test_bi_FE,
                    nseg = 1,
                    nrings = 1)
 
+
+# for (lens in list.lenses){
+#   gapfrac_fisheye(test_bi_FE[[1]],
+#                   lens = lens,
+#                   display = TRUE,
+#                   nseg = 1,
+#                   nrings = 1)
+# } 
 ```
 
 ### Leaf Area Index
