@@ -2,7 +2,7 @@
 title: Canopy Cover from Spherical photos Part 2
 author: Sam Ericksen
 date: '2022-05-13'
-slug: index.en-us
+slug: Canopy-Cover-2
 categories:
   - GIS
   - Forestry
@@ -20,8 +20,6 @@ bibliography: references.yaml
 library(knitr)
 options(width = 300)
 ```
-
-# Estimating Canopy Cover with Spherical Photos - Part 2
 
 The main goal for this tutorial will be to use the precise GPS data collected during survays to correct the position of the spherical photos. Then, using the photo names we combine our light indices created in [Part 1](https://numbers-in-nature.netlify.app/2022/04/30/canopy-cover1/) to the photo locations. Then we use those locations and light indices to create a predictive model of gap fraction throughout the stand and use interpolation to create a raster of predicted gap fraction on a continuous scale throughout the stand.
 
@@ -274,17 +272,17 @@ pal <- colorNumeric(c("#0C2C84", "#41B6C4", "#FFFFCC"),
 
 leaflet() %>% 
   addProviderTiles("Esri.WorldImagery") %>%
-  addRasterImage(interp_TPS, colors = pal, layerId = "raster") %>% 
+  addRasterImage(interp_TPS, colors = pal, layerId = "raster", opacity = 0.6) %>% 
   leaflet::addLegend(
     position = "topright",
     pal = pal,
     values = getValues(interp_TPS),
     title = "Gap Fraction"
-  ) %>% 
-  addOpacitySlider(layerId = "raster")
+  ) #%>% 
+ # addOpacitySlider(layerId = "raster", )
 ```
 
-by playing with the transparency slider you can see how closely the gap fraction (a good measure of canopy cover) coincides with the eucalyptus trees. That looks like a pretty good correlation just by looking at it, in the next part we will look at how to test that correlation against other variables and methods.
+You can see how closely the gap fraction (a good measure of canopy cover) coincides with the eucalyptus trees. That looks like a pretty good correlation just by looking at it, in the next part we will look at how to test that correlation against other variables and methods.
 
 ## Coming in Part 3
 
