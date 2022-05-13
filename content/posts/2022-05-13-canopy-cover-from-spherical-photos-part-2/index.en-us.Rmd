@@ -1,0 +1,297 @@
+---
+title: Canopy Cover from Spherical photos Part 2
+author: Sam Ericksen
+date: '2022-05-13'
+slug: index.en-us
+categories:
+  - GIS
+  - Forestry
+tags:
+  - Canopy Cover
+  - GIS
+  - Natural Resources
+  - R
+  - Spherical Photos
+  - Forestry
+bibliography: references.yaml
+---
+
+```{r setup, echo=FALSE}
+library(knitr)
+options(width = 300)
+```
+
+# Estimating Canopy Cover with Spherical Photos - Part 2
+
+The main goal for this tutorial will be to use the precise GPS data collected during survays to correct the position of the spherical photos. Then, using the photo names we combine our light indices created in [Part 1](https://numbers-in-nature.netlify.app/2022/04/30/canopy-cover1/) to the photo locations. Then we use those locations and light indices to create a predictive model of gap fraction throughout the stand and use interpolation to create a raster of predicted gap fraction on a continuous scale throughout the stand.
+
+```{r packages, message=FALSE, warning=FALSE}
+library(exifr) #exiftool wrapper
+library(plotKML)
+library(lubridate)
+library(magrittr)
+library(tidyr)
+library(dplyr)
+library(leaflet)
+library(leaflet.opacity)
+library(fields)
+library(sp)
+library(raster)
+```
+
+## Geometry from photos
+
+Although the GoPro 360 embeds GPS information in each photo, this information is about as precise as a normal phone GPS (\~5m). In order to get better accuracy, an Arrow hat-mounted GPS was unit was used to collect location information during this survey, which output a `16-Feb-2022-1600-clipped.gpx` file with higher precision than consumer grade GPS units. In order to match the photos up with the Arrow GPS we need time stamp information from the pictures, as well as the tracks file.
+
+### Picture information
+
+Here we use exifr to read in metadata associated with the photos ( @mike2022 ). the `args` allow us to keep only the metadata associated with those calls (i.e. we keep only the file name, the time variables, and the gps variables) ( @exiftool ).
+
+**NOTE:** Exiftools and Perl must be installed and added to system PATH already to use exifr.
+
+```{r get image info, message=FALSE, warning=FALSE, eval=FALSE}
+
+image_path <- list.files("360_Pics/",
+                         full.names = T) #test image
+
+image_df <-  read_exif(image_path, 
+             args = "-*FileName* -*Time* - *GPS*")
+```
+
+```{r psuedo image exif, echo=FALSE}
+image_df <- read.csv2("all_images_exif.csv")
+```
+
+### Read GPX
+
+This process is simple enough, we read in the `.gpx` data using the `plotKML` package ( @plotkml ). All we have to do is subset it to the dataframe containing the latitude & longitude as well as the timestamp (here we do it all in one line just for convenience).
+
+```{r gpx}
+gps_pnts <- readGPX("16-Feb-2022-1600-clipped.gpx")$tracks[[1]][[1]] #get tracks from .gpx file
+
+range(gps_pnts$time)
+```
+
+```{r plot gpx locations}
+leaflet(slice(gps_pnts,which(row_number() %% 10 == 1))) %>% #display every 10th element (lots of points here)
+  addProviderTiles("Esri.WorldImagery") %>% 
+  addMarkers(lng = ~lon, 
+             lat = ~lat, 
+             popup = ~time)
+# keep time as an attribute
+```
+
+### Lining up times
+
+That's looking good, but lets make sure that the time ranges line up between the images and the `.gpx` tracks. We'll just compare the ranges to make sure they are similar.
+
+```{r compare ranges}
+print(paste("gpx time range:", 
+            range(gps_pnts$time)[1], 
+            "-", 
+            range(gps_pnts$time)[2]))
+print(paste("image time range:", 
+            range(image_df$GPSDateTime)[1], 
+            "-", 
+            range(image_df$GPSDateTime)[2]))
+```
+
+They seem to be well lined up, considering we started the Arrow GPS up early to let it capture satellites, and I happen to know that I forgot to turn it off until I was in the car ready about to leave, after I had packed everything up, so we will carry on assuming that they are lined up properly for now.
+
+Now that we know that lets make a new column in each dataframe with times that are in the same format as each other that we will be able to join them on later.
+
+```{r format times}
+
+gps_pnts %<>% 
+  mutate(form_time = ymd_hms(time))
+
+image_df %<>% 
+  mutate(form_time = ymd_hms(GPSDateTime))
+
+image_df$form_time[1]
+gps_pnts$form_time[1]
+```
+
+I also happen to know that images were triggered every 2 seconds, and gps points were taken at not so uniform of an interval, so we should see if gps points were captured at even or odd seconds, and then modify the gps_points to fit the seconds of the images.
+
+```{r check evens or odd times}
+unique(as.integer(image_df$form_time)%%2==0) #check if there are only odds or evens - TRUE means only odds (modulate by 2)
+```
+
+looks like all we have are even times in the image dataframe. So lets round the form_time in the gps_points to the nearest even second so we can more easily join on time.
+
+```{r round gps time}
+
+gps_pnts %<>% 
+  mutate(form_time = round_date(form_time, "2 seconds"))
+
+unique(as.integer(gps_pnts$form_time)%%2==0)
+```
+
+### Joining Dataframes
+
+Next we need to join the dataframes, so that images can be plotted by the Arrow GPS points. We will lose some of our pictures, as some gps points will be non-existent for a given time, but in these cases we won't lose much as pictures will have been within a few seconds of each other.
+
+```{r joining dataframes}
+
+combined_GF_df <- gps_pnts %>%
+  right_join(image_df, by = c("form_time" = "form_time")) %>% 
+  drop_na(lat) %>% 
+  dplyr::select(FileName, lat, lon, ele, form_time, SourceFile)
+
+```
+
+### Add Attributes
+
+Next we just need to add the light indices we computed in the last post.
+
+```{r}
+photo_indices <- read.csv2("all_photos_compressed.csv") #file we saved in last post with light indices and image names
+
+combined_GF_df %<>% 
+  left_join(photo_indices, by = c("FileName" = "Pic_Name"))
+```
+
+Now we have a dataframe with latitude and longitude locations of each picture, and all the computed light indices
+
+```{r map index points, echo=FALSE}
+pal <- colorNumeric(
+  palette = "YlOrRd",
+  domain = combined_GF_df$Gap_Frac
+)
+
+leaflet(slice(combined_GF_df,which(row_number() %% 2 == 1))) %>% 
+  addProviderTiles("Esri.WorldImagery") %>% 
+  addCircleMarkers(lng = ~lon, 
+                   lat = ~lat,
+                   color = ~pal(Gap_Frac),
+                   popup = ~paste("Gap Fraction:", Gap_Frac, 
+                                  "<br>Effective LAI:", eff_LAI,
+                                  "<br>Mean Leaf Angle:", Mean_Leaf_Angle),
+                   opacity = .4) %>% 
+  leaflet::addLegend("topright", 
+            pal = pal, 
+            values = ~Gap_Frac, 
+            title = "Gap Fraction")
+
+```
+
+## Interpolation
+
+For this part I rely heavily on Dr.Sören Wilke's [interpolation tutorial](https://swilke-geoscience.net/post/spatial_interpolation/) ( @apracti ). The tutorial covers multiple methods of geospatial interpolation, and I highly recommend it.
+
+### Create Spatial Dataframe
+
+First we create a spatial dataframe that we will use as the bounding area for all rasters. One could skip this step in favor of using `min()` and `max()` on the data.frame, but since spatial dataframes can be useful for plotting and checking, I will make one here.
+
+```{r spatial dataframe creation}
+
+gap_frac_pnts <- SpatialPointsDataFrame(coords = combined_GF_df[,c("lon", 
+                                                                   "lat")],
+                                        data = combined_GF_df[,c("Gap_Frac",
+                                                                 "ele",
+                                                                 "eff_LAI",
+                                                                 "act_LAI",
+                                                                 "Mean_Leaf_Angle",
+                                                                 "FileName",
+                                                                 "form_time")],
+                                        proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs"))
+```
+
+### Make Grid Template
+
+Now we need to make a grid that will later become our raster. Here we are working in degrees, when we change our resolution we base it on degrees. It would probably be wise to consider re-projection early on into a more localized coordinate system, but since our very precise GPS data was collected in this coordinate system we will stick with it for now (it also cooperates well with embedded web maps)
+
+```{r  grid tempate}
+pnts_bbox <- bbox(gap_frac_pnts)
+
+pnts_bbox
+
+grid_template <- expand.grid(
+  X = seq(from = pnts_bbox[1],
+          to = pnts_bbox[3],
+          by = .00001), #resolution = 0.00001 degrees
+  Y = seq(from = pnts_bbox[2],
+          to = pnts_bbox[4],
+          by = .00001)
+)
+```
+
+```{r test plot, include=FALSE, eval=FALSE}
+grid_plot <- ggplot() +
+  geom_point(data = grid_template, 
+             aes(x = X, y = Y), 
+             size = 0.01) +
+  geom_point(data = combined_GF_df,
+             mapping = aes(x = lon, y = lat, color = Gap_Frac), 
+             size = 3) +
+  scale_color_gradientn(colors = c("blue", "yellow", "red")) +
+  coord_cartesian( #zooming in so we can actually see something
+    xlim = c(pnts_bbox[1], 
+             pnts_bbox[3]), 
+    ylim = c(pnts_bbox[2], 
+             pnts_bbox[4])) +
+  theme_bw()
+
+grid_plot
+```
+
+### Turn Grid into Raster
+
+Now we just turn the grid template into a raster.
+
+```{r , eval=FALSE}
+crs_raster <- crs(gap_frac_pnts)
+
+grid_raster <- grid_template %>% 
+  dplyr::mutate(Z = 0) %>% 
+  rasterFromXYZ(
+    crs = crs_raster
+  )
+
+```
+
+### Interpolate!
+
+Finally we can interpolate our discrete points from the photos into a continuous raster!
+
+```{r interpolate raster, eval=FALSE}
+thinSpline_fit <- fields::Tps(
+  x = as.matrix(combined_GF_df[, c("lon","lat")]),
+  Y = combined_GF_df$Gap_Frac,
+  miles = FALSE
+)
+
+interp_TPS <- raster::interpolate(grid_raster, thinSpline_fit)
+```
+
+```{r psuedo interp plus map, warning=FALSE, message=FALSE, echo=FALSE}
+interp_TPS <- raster("thinSpline_Raster.tif")
+
+pal <- colorNumeric(c("#0C2C84", "#41B6C4", "#FFFFCC"),
+                    getValues(interp_TPS),
+                    na.color = "transparent")
+
+leaflet() %>% 
+  addProviderTiles("Esri.WorldImagery") %>%
+  addRasterImage(interp_TPS, colors = pal, layerId = "raster") %>% 
+  leaflet::addLegend(
+    position = "topright",
+    pal = pal,
+    values = getValues(interp_TPS),
+    title = "Gap Fraction"
+  ) %>% 
+  addOpacitySlider(layerId = "raster")
+```
+
+by playing with the transparency slider you can see how closely the gap fraction (a good measure of canopy cover) coincides with the eucalyptus trees. That looks like a pretty good correlation just by looking at it, in the next part we will look at how to test that correlation against other variables and methods.
+
+## Coming in Part 3
+
+-   Using Uber H3 Hexigons to aggrigate data
+
+-   Using Canopy Height Model to get information
+
+-   Correlating Canopy Height info to Gap Fraction stats
+
+## References
